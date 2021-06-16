@@ -129,7 +129,7 @@ class Worklog extends IdeckiaAction {
 					acc = acc.add(Hour(task.time.getHour())).add(Minute(task.time.getMinute()));
 				}
 
-				server.dialog(DialogType.entry, 'What where you doing?').then(returnValue -> {
+				server.dialog(DialogType.Entry, 'What where you doing?').then(returnValue -> {
 					if (returnValue != '') {
 						lastTask.work = returnValue;
 						acc = acc.add(Hour(lastTask.time.getHour())).add(Minute(lastTask.time.getMinute()));
@@ -137,7 +137,7 @@ class Worklog extends IdeckiaAction {
 						todayTasks.push(lastTask);
 						lastData.tasks = todayTasks;
 						
-						server.dialog(DialogType.info, 'Worked time: ${acc.format(TIME_FORMAT)}').catchError(reject);
+						server.dialog(DialogType.Info, 'Worked time: ${acc.format(TIME_FORMAT)}').catchError(reject);
 
 						if (props.setColor)
 							currentState.bgColor = props.color.notWorking;
