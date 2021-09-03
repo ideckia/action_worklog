@@ -16,18 +16,12 @@ typedef Props = {
 	var workHours:UInt;
 	@:editable("How many minutes do you need to have lunch?", 60)
 	var lunchMinutes:UInt;
-	@:editable("Update and show worked time in item?", true)
-	var showTime:Bool;
 }
 
 class Worklog extends IdeckiaAction {
 	static public inline var DAY_FORMAT = '%F';
 	static public inline var TIME_FORMAT = '%H:%M';
 	static public inline var JSON_SPACE = '    ';
-
-	var timer:haxe.Timer;
-	var state:ItemState;
-	var isWorking:Bool;
 
 	function initDay():DayDataJson {
 		var localNow = DateTime.local();
@@ -45,11 +39,7 @@ class Worklog extends IdeckiaAction {
 		};
 	}
 
-	override public function init(initState:ItemState) {
-		isWorking = true;
-		state = initState;
-		initTimer(0);
-
+	override public function init(_) {
 		var data:Array<DayDataJson> = haxe.Json.parse(try sys.io.File.getContent(props.filePath) catch (e:haxe.Exception) '[]');
 		if (data.length > 0) {
 			if (data[data.length - 1].day == DateTime.local().format(DAY_FORMAT))
@@ -123,10 +113,6 @@ class Worklog extends IdeckiaAction {
 				todayTasks.push({
 					start: nearestQuarter(localNow)
 				});
-                
-                isWorking = true;
-
-				initTimer(lastData.totalTime);
 
 				saveToFile(data);
 
@@ -145,15 +131,11 @@ class Worklog extends IdeckiaAction {
 
 				server.dialog(DialogType.Entry, 'What where you doing?').then(returnValue -> {
 					if (returnValue != '') {
-						isWorking = false;
 						lastTask.work = returnValue;
 						acc = acc.add(Hour(lastTask.time.getHour())).add(Minute(lastTask.time.getMinute()));
 						lastData.totalTime = acc;
 						todayTasks.push(lastTask);
 						lastData.tasks = todayTasks;
-
-						if (timer != null)
-							timer.stop();
 
 						server.dialog(DialogType.Info, 'Worked time: ${acc.format(TIME_FORMAT)}').catchError(reject);
 
@@ -167,21 +149,6 @@ class Worklog extends IdeckiaAction {
 				}).catchError(reject);
 			}
 		});
-	}
-
-	function initTimer(totalTime:DateTime) {
-		if (props.showTime) {
-			timer = new haxe.Timer(15 * 60 * 1000);
-			timer.run = () -> {
-				if (!isWorking)
-					return;
-
-				totalTime = totalTime.add(Minute(15));
-				state.text = 'Worklog\nTime: ${DateTools.format(totalTime, '%H:%M')}';
-				server.log('timer -> $state');
-				server.sendToClient(state);
-			}
-		}
 	}
 
 	function saveToFile(data:Array<DayData>) {
