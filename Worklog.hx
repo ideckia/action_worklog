@@ -18,6 +18,7 @@ typedef Props = {
 	var lunchMinutes:UInt;
 }
 
+@:name('worklog')
 class Worklog extends IdeckiaAction {
 	static public inline var DAY_FORMAT = '%F';
 	static public inline var TIME_FORMAT = '%H:%M';
@@ -31,23 +32,33 @@ class Worklog extends IdeckiaAction {
 		return {
 			day: localNow.format(DAY_FORMAT),
 			exitTime: exitTime.format(TIME_FORMAT),
-			tasks: [{
-				start: nearestQuarter(localNow).format(TIME_FORMAT)
-			}]
+			tasks: [
+				{
+					start: nearestQuarter(localNow).format(TIME_FORMAT)
+				}
+			]
 		};
 	}
 
-	override public function init() {
+	override public function init(initialState:ItemState):js.lib.Promise<ItemState> {
+		return new js.lib.Promise((resolve, reject) -> {
+			if (props.setColor)
+				initialState.bgColor = props.color.working;
 
-		var data:Array<DayDataJson> = haxe.Json.parse(try sys.io.File.getContent(props.filePath) catch (e:haxe.Exception) '[]');
-		if (data.length > 0) {
-			if (data[data.length - 1].day == DateTime.local().format(DAY_FORMAT))
-				return;
-		}
+			var data:Array<DayDataJson> = haxe.Json.parse(try sys.io.File.getContent(props.filePath) catch (e:haxe.Exception) '[]');
+			if (data.length > 0) {
+				if (data[data.length - 1].day == DateTime.local().format(DAY_FORMAT)) {
+					resolve(initialState);
+					return;
+				}
+			}
 
-		data.push(initDay());
+			data.push(initDay());
 
-		sys.io.File.saveContent(props.filePath, haxe.Json.stringify(data, JSON_SPACE));
+			sys.io.File.saveContent(props.filePath, haxe.Json.stringify(data, JSON_SPACE));
+
+			resolve(initialState);
+		});
 	}
 
 	public function execute(currentState:ItemState):js.lib.Promise<ItemState> {
@@ -55,7 +66,6 @@ class Worklog extends IdeckiaAction {
 	}
 
 	function parseFile():Array<DayData> {
-
 		var dailyContent:Array<DayDataJson> = haxe.Json.parse(try sys.io.File.getContent(props.filePath) catch (e:haxe.Exception) '[]');
 		if (dailyContent.length == 0) {
 			dailyContent.push(initDay());
@@ -63,7 +73,7 @@ class Worklog extends IdeckiaAction {
 
 		return dailyContent.map(parseDayDataJson);
 	}
-	
+
 	function parseDayDataJson(stringData:DayDataJson):DayData {
 		inline function stringToDateTime(s:String) {
 			if (s == null)
@@ -136,14 +146,14 @@ class Worklog extends IdeckiaAction {
 						lastData.totalTime = acc;
 						todayTasks.push(lastTask);
 						lastData.tasks = todayTasks;
-						
+
 						server.dialog(DialogType.Info, 'Worked time: ${acc.format(TIME_FORMAT)}').catchError(reject);
 
 						if (props.setColor)
 							currentState.bgColor = props.color.notWorking;
 
 						saveToFile(data);
-	
+
 						resolve(currentState);
 					}
 				}).catchError(reject);
