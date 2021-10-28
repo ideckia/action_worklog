@@ -18,6 +18,7 @@ typedef Props = {
 	var lunchMinutes:UInt;
 }
 
+@:name('worklog')
 class Worklog extends IdeckiaAction {
 	static public inline var DAY_FORMAT = '%F';
 	static public inline var TIME_FORMAT = '%H:%M';
@@ -39,16 +40,25 @@ class Worklog extends IdeckiaAction {
 		};
 	}
 
-	override public function init(_) {
-		var data:Array<DayDataJson> = haxe.Json.parse(try sys.io.File.getContent(props.filePath) catch (e:haxe.Exception) '[]');
-		if (data.length > 0) {
-			if (data[data.length - 1].day == DateTime.local().format(DAY_FORMAT))
-				return;
-		}
+	override public function init(initialState:ItemState):js.lib.Promise<ItemState> {
+		return new js.lib.Promise((resolve, reject) -> {
+			if (props.setColor)
+				initialState.bgColor = props.color.working;
 
-		data.push(initDay());
+			var data:Array<DayDataJson> = haxe.Json.parse(try sys.io.File.getContent(props.filePath) catch (e:haxe.Exception) '[]');
+			if (data.length > 0) {
+				if (data[data.length - 1].day == DateTime.local().format(DAY_FORMAT)) {
+					resolve(initialState);
+					return;
+				}
+			}
 
-		sys.io.File.saveContent(props.filePath, haxe.Json.stringify(data, JSON_SPACE));
+			data.push(initDay());
+
+			sys.io.File.saveContent(props.filePath, haxe.Json.stringify(data, JSON_SPACE));
+
+			resolve(initialState);
+		});
 	}
 
 	public function execute(currentState:ItemState):js.lib.Promise<ItemState> {
