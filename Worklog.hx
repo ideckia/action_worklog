@@ -16,6 +16,8 @@ typedef Props = {
 	var workHours:UInt;
 	@:editable("How many minutes do you need to have lunch?", 60)
 	var lunchMinutes:UInt;
+	@:editable("Round to the neares quarter? e.g. 15:04 will be stored as 15:00 (and 16:10 -> 16:15) ", true)
+	var roundToQuarter:Bool;
 }
 
 @:name('worklog')
@@ -34,7 +36,7 @@ class Worklog extends IdeckiaAction {
 			exitTime: exitTime.format(TIME_FORMAT),
 			tasks: [
 				{
-					start: nearestQuarter(localNow).format(TIME_FORMAT)
+					start: roundedTime(localNow).format(TIME_FORMAT)
 				}
 			]
 		};
@@ -80,7 +82,7 @@ class Worklog extends IdeckiaAction {
 				return null;
 			var zero = new DateTime(0);
 			var sp = s.split(':');
-			return nearestQuarter(zero.add(Hour(Std.parseInt(sp[0]))).add(Minute(Std.parseInt(sp[1]))));
+			return roundedTime(zero.add(Hour(Std.parseInt(sp[0]))).add(Minute(Std.parseInt(sp[1]))));
 		}
 		var item:DayData = {
 			day: DateTime.fromString(stringData.day),
@@ -121,7 +123,7 @@ class Worklog extends IdeckiaAction {
 					todayTasks.push(lastTask);
 
 				todayTasks.push({
-					start: nearestQuarter(localNow)
+					start: roundedTime(localNow)
 				});
 
 				saveToFile(data);
@@ -131,7 +133,7 @@ class Worklog extends IdeckiaAction {
 
 				resolve(currentState);
 			} else {
-				lastTask.finish = nearestQuarter(localNow);
+				lastTask.finish = roundedTime(localNow);
 				lastTask.time = lastTask.finish.add(Second(-Std.int(lastTask.start.getTime())));
 
 				var acc = new DateTime(0);
@@ -193,7 +195,9 @@ class Worklog extends IdeckiaAction {
 		sys.io.File.saveContent(props.filePath, haxe.Json.stringify(fileContent, JSON_SPACE));
 	}
 
-	function nearestQuarter(time:DateTime) {
+	function roundedTime(time:DateTime) {
+		if (!props.roundToQuarter)
+			return time;
 		var minsInHour = 60;
 		var quarter = minsInHour * .25;
 
