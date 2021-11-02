@@ -24,25 +24,9 @@ Log in a JSON file your daily work. The path of this file can be configured with
 | lunchMinutes | UInt | 60 | How many minutes do you need to have lunch? | null |
 | setColor | Bool | true | Do you want to change the color when you are working and when you are not? | null |
 | workHours | UInt | 8 | How many hours do you work on a day? | null |
+| roundToQuarter | Bool | true | Round to the neares quarter? e.g. 15:04 will be stored as 15:00 (and 16:10 -> 16:15)  | null |
 
-## Example in layout file
-
-```json
-{
-    "state": {
-        "text": "",
-        "bgColor": "00ff00",
-        "action": {
-            "name": "worklog",
-            "props": {
-                "setColor": "false"
-            }
-        }
-    }
-}
-```
-
-When the action is executed (when clicked the button in the client), it will open the log file:
+## On single click
 
 * If there is a task with no finish time:
   * It will prompt you what you've been doing.
@@ -52,3 +36,34 @@ When the action is executed (when clicked the button in the client), it will ope
 * If there is no tasks or if there is no task open:
   * It will create a new task with the start time.
   * If setColor is true, it will send to client the new state with the `color.working` color.
+
+## On long press
+
+Does nothing
+
+## Example in layout file
+
+```json
+{
+    "state": {
+        "text": "",
+        "bgColor": "00ff00",
+        "actions": [
+            {
+                "name": "worklog",
+                "props": {
+                    "color": {
+                        "working" : "ff00aa00",
+                        "notWorking" : "ffaa0000"
+                    },
+                    "filePath": "worklog.json",
+                    "lunchMinutes": 60,
+                    "roundToQuarter": true,
+                    "setColor": true,
+                    "workHours": 8
+                }
+            }
+        ]
+    }
+}
+```
