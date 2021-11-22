@@ -67,6 +67,27 @@ class Worklog extends IdeckiaAction {
 		return processData(currentState, parseFile());
 	}
 
+	override public function onLongPress(currentState:ItemState) {
+		return new js.lib.Promise((resolve, reject) -> {
+			var data = parseFile();
+			var todayData:DayData = data[data.length - 1];
+			if (todayData != null && todayData.tasks != null && todayData.tasks.length > 0) {
+				final todayTasks:Array<Task> = todayData.tasks;
+
+				var lastTask = todayTasks[todayTasks.length - 1];
+				var acc = calculateAccumulatedTime(todayTasks);
+				if (lastTask.finish == null) {
+					var now = roundedTime(DateTime.local());
+					var unregisteredTaskTime = now.add(Second(-Std.int(lastTask.start.getTime())));
+					acc = acc.add(Hour(unregisteredTaskTime.getHour())).add(Minute(unregisteredTaskTime.getMinute()));
+				}
+				server.dialog.info('Worked time: ${acc.format(TIME_FORMAT)}').catchError(reject);
+			}
+
+			resolve(currentState);
+		});
+	}
+
 	function parseFile():Array<DayData> {
 		var dailyContent:Array<DayDataJson> = haxe.Json.parse(try sys.io.File.getContent(props.filePath) catch (e:haxe.Exception) '[]');
 		if (dailyContent.length == 0) {
@@ -103,18 +124,26 @@ class Worklog extends IdeckiaAction {
 		return item;
 	}
 
+	function calculateAccumulatedTime(todayTasks:Array<Task>) {
+		var acc = new DateTime(0);
+		for (task in todayTasks)
+			if (task.time != null)
+				acc = acc.add(Hour(task.time.getHour())).add(Minute(task.time.getMinute()));
+		return acc;
+	}
+
 	function processData(currentState:ItemState, data:Array<DayData>) {
 		return new js.lib.Promise((resolve, reject) -> {
 			final localNow = DateTime.local();
-			var lastData:DayData = data[data.length - 1];
-			if (lastData == null)
-				lastData = {
+			var todayData:DayData = data[data.length - 1];
+			if (todayData == null)
+				todayData = {
 					day: localNow,
 					totalTime: 0,
 					exitTime: localNow
 				};
 
-			final todayTasks:Array<Task> = lastData.tasks == null ? [] : lastData.tasks;
+			final todayTasks:Array<Task> = todayData.tasks == null ? [] : todayData.tasks;
 
 			todayTasks.sort((z1, z2) -> Std.int(z1.start.getTime() - z2.start.getTime()));
 			var lastTask = todayTasks.pop();
@@ -136,20 +165,14 @@ class Worklog extends IdeckiaAction {
 				lastTask.finish = roundedTime(localNow);
 				lastTask.time = lastTask.finish.add(Second(-Std.int(lastTask.start.getTime())));
 
-				var acc = new DateTime(0);
-				for (task in todayTasks) {
-					acc = acc.add(Hour(task.time.getHour())).add(Minute(task.time.getMinute()));
-				}
-
 				server.dialog.entry('What where you doing?').then(returnValue -> {
 					if (returnValue != '') {
 						lastTask.work = returnValue;
-						acc = acc.add(Hour(lastTask.time.getHour())).add(Minute(lastTask.time.getMinute()));
-						lastData.totalTime = acc;
 						todayTasks.push(lastTask);
-						lastData.tasks = todayTasks;
+						todayData.totalTime = calculateAccumulatedTime(todayTasks);
+						todayData.tasks = todayTasks;
 
-						server.dialog.info('Worked time: ${acc.format(TIME_FORMAT)}').catchError(reject);
+						server.dialog.info('Worked time: ${todayData.totalTime.format(TIME_FORMAT)}').catchError(reject);
 
 						if (props.setColor)
 							currentState.bgColor = props.color.notWorking;

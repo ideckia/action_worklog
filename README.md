@@ -39,7 +39,7 @@ Log in a JSON file your daily work. The path of this file can be configured with
 
 ## On long press
 
-Does nothing
+Shows the current working time dialog
 
 ## Example in layout file
 
