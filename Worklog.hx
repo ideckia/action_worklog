@@ -21,6 +21,7 @@ typedef Props = {
 }
 
 @:name('worklog')
+@:description('Log you daily work in a plain json file.')
 class Worklog extends IdeckiaAction {
 	static public inline var DAY_FORMAT = '%F';
 	static public inline var TIME_FORMAT = '%H:%M';
