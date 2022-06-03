@@ -24,7 +24,7 @@ Log in a JSON file your daily work. The path of this file can be configured with
 | lunchMinutes | UInt | 60 | How many minutes do you need to have lunch? | null |
 | setColor | Bool | true | Do you want to change the color when you are working and when you are not? | null |
 | workHours | UInt | 8 | How many hours do you work on a day? | null |
-| roundToQuarter | Bool | true | Round to the neares quarter? e.g. 15:04 will be stored as 15:00 (and 16:10 -> 16:15)  | null |
+| roundToQuarter | Bool | true | Round to the nearest quarter? e.g. 15:04 will be stored as 15:00 (and 16:10 -> 16:15)  | null |
 
 ## On single click
 

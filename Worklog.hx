@@ -1,8 +1,8 @@
 package;
 
 import datetime.DateTime;
+import WorklogUtils;
 
-using Types;
 using api.IdeckiaApi;
 
 typedef Props = {
@@ -23,21 +23,18 @@ typedef Props = {
 @:name('worklog')
 @:description('Log you daily work in a plain json file.')
 class Worklog extends IdeckiaAction {
-	static public inline var DAY_FORMAT = '%F';
-	static public inline var TIME_FORMAT = '%H:%M';
-	static public inline var JSON_SPACE = '    ';
-
-	function initDay():DayDataJson {
+	function initDay():DayData {
 		var localNow = DateTime.local();
 		var minuteModulo = Std.int((props.workHours % 1) * 60);
 		var exitTime = localNow.add(Hour(Std.int(props.workHours))).add(Minute(minuteModulo + props.lunchMinutes));
+		var startTime = getRounded(localNow);
 
 		return {
-			day: localNow.format(DAY_FORMAT),
-			exitTime: exitTime.format(TIME_FORMAT),
+			day: localNow,
+			exitTime: exitTime,
 			tasks: [
 				{
-					start: roundedTime(localNow).format(TIME_FORMAT)
+					start: startTime
 				}
 			]
 		};
@@ -48,9 +45,9 @@ class Worklog extends IdeckiaAction {
 			if (props.setColor)
 				initialState.bgColor = props.color.working;
 
-			var data:Array<DayDataJson> = haxe.Json.parse(try sys.io.File.getContent(props.filePath) catch (e:haxe.Exception) '[]');
+			var data:Array<DayData> = WorklogUtils.parse(props.filePath);
 			if (data.length > 0) {
-				if (data[data.length - 1].day == DateTime.local().format(DAY_FORMAT)) {
+				if (data[data.length - 1].day.equals(DateTime.local())) {
 					resolve(initialState);
 					return;
 				}
@@ -58,7 +55,7 @@ class Worklog extends IdeckiaAction {
 
 			data.push(initDay());
 
-			sys.io.File.saveContent(props.filePath, haxe.Json.stringify(data, JSON_SPACE));
+			WorklogUtils.saveToFile(props.filePath, data);
 
 			resolve(initialState);
 		});
@@ -76,13 +73,13 @@ class Worklog extends IdeckiaAction {
 				final todayTasks:Array<Task> = todayData.tasks;
 
 				var lastTask = todayTasks[todayTasks.length - 1];
-				var acc = calculateAccumulatedTime(todayTasks);
+				var acc:Time = calculateDayAccumulatedTime(todayTasks);
 				if (lastTask.finish == null) {
-					var now = roundedTime(DateTime.local());
-					var unregisteredTaskTime = now.add(Second(-Std.int(lastTask.start.getTime())));
+					var now = getRounded(DateTime.local());
+					var unregisteredTaskTime = now.add(Second(-Std.int(lastTask.start.getTotalSeconds())));
 					acc = acc.add(Hour(unregisteredTaskTime.getHour())).add(Minute(unregisteredTaskTime.getMinute()));
 				}
-				server.dialog.info('Worked time: ${acc.format(TIME_FORMAT)}').catchError(reject);
+				server.dialog.info('Worked time: $acc').catchError(reject);
 			}
 
 			resolve(currentState);
@@ -90,42 +87,15 @@ class Worklog extends IdeckiaAction {
 	}
 
 	function parseFile():Array<DayData> {
-		var dailyContent:Array<DayDataJson> = haxe.Json.parse(try sys.io.File.getContent(props.filePath) catch (e:haxe.Exception) '[]');
+		var dailyContent:Array<DayData> = WorklogUtils.parse(props.filePath);
 		if (dailyContent.length == 0) {
 			dailyContent.push(initDay());
 		}
 
-		return dailyContent.map(parseDayDataJson);
+		return dailyContent;
 	}
 
-	function parseDayDataJson(stringData:DayDataJson):DayData {
-		inline function stringToDateTime(s:String) {
-			if (s == null)
-				return null;
-			var zero = new DateTime(0);
-			var sp = s.split(':');
-			return roundedTime(zero.add(Hour(Std.parseInt(sp[0]))).add(Minute(Std.parseInt(sp[1]))));
-		}
-		var item:DayData = {
-			day: DateTime.fromString(stringData.day),
-			totalTime: stringToDateTime(stringData.totalTime),
-			exitTime: stringToDateTime(stringData.exitTime)
-		};
-		if (stringData.tasks != null) {
-			item.tasks = [];
-			for (t in stringData.tasks) {
-				item.tasks.push({
-					start: stringToDateTime(t.start),
-					finish: stringToDateTime(t.finish),
-					time: stringToDateTime(t.time),
-					work: t.work
-				});
-			}
-		}
-		return item;
-	}
-
-	function calculateAccumulatedTime(todayTasks:Array<Task>) {
+	function calculateDayAccumulatedTime(todayTasks:Array<Task>) {
 		var acc = new DateTime(0);
 		for (task in todayTasks)
 			if (task.time != null)
@@ -146,39 +116,39 @@ class Worklog extends IdeckiaAction {
 
 			final todayTasks:Array<Task> = todayData.tasks == null ? [] : todayData.tasks;
 
-			todayTasks.sort((z1, z2) -> Std.int(z1.start.getTime() - z2.start.getTime()));
+			todayTasks.sort((z1, z2) -> Std.int(z1.start.getTotalSeconds() - z2.start.getTotalSeconds()));
 			var lastTask = todayTasks.pop();
 			if (lastTask == null || lastTask.finish != null) {
 				if (lastTask != null)
 					todayTasks.push(lastTask);
 
 				todayTasks.push({
-					start: roundedTime(localNow)
+					start: getRounded(localNow)
 				});
 
-				saveToFile(data);
+				WorklogUtils.saveToFile(props.filePath, data);
 
 				if (props.setColor)
 					currentState.bgColor = props.color.working;
 
 				resolve(currentState);
 			} else {
-				lastTask.finish = roundedTime(localNow);
-				lastTask.time = lastTask.finish.add(Second(-Std.int(lastTask.start.getTime())));
+				lastTask.finish = getRounded(localNow);
+				lastTask.time = lastTask.finish.add(Second(-Std.int(lastTask.start.getTotalSeconds())));
 
 				server.dialog.entry('What where you doing?').then(returnValue -> {
 					if (returnValue != '') {
 						lastTask.work = returnValue;
 						todayTasks.push(lastTask);
-						todayData.totalTime = calculateAccumulatedTime(todayTasks);
+						todayData.totalTime = calculateDayAccumulatedTime(todayTasks);
 						todayData.tasks = todayTasks;
 
-						server.dialog.info('Worked time: ${todayData.totalTime.format(TIME_FORMAT)}').catchError(reject);
+						server.dialog.info('Worked time: ${todayData.totalTime}').catchError(reject);
 
 						if (props.setColor)
 							currentState.bgColor = props.color.notWorking;
 
-						saveToFile(data);
+						WorklogUtils.saveToFile(props.filePath, data);
 
 						resolve(currentState);
 					}
@@ -187,54 +157,7 @@ class Worklog extends IdeckiaAction {
 		});
 	}
 
-	function saveToFile(data:Array<DayData>) {
-		inline function toTimeFormat(dt:DateTime) {
-			if (dt == null)
-				return null;
-			return dt.format(TIME_FORMAT);
-		}
-
-		var fileContent = [];
-		var dataJson:DayDataJson;
-		for (e in data) {
-			dataJson = {
-				day: e.day.format(DAY_FORMAT),
-				totalTime: toTimeFormat(e.totalTime),
-				exitTime: toTimeFormat(e.exitTime)
-			};
-			if (e.tasks != null) {
-				dataJson.tasks = [];
-				for (t in e.tasks) {
-					dataJson.tasks.push({
-						start: toTimeFormat(t.start),
-						finish: toTimeFormat(t.finish),
-						time: toTimeFormat(t.time),
-						work: t.work
-					});
-				}
-			}
-			fileContent.push(dataJson);
-		}
-
-		sys.io.File.saveContent(props.filePath, haxe.Json.stringify(fileContent, JSON_SPACE));
-	}
-
-	function roundedTime(time:DateTime) {
-		if (!props.roundToQuarter)
-			return time;
-		var minsInHour = 60;
-		var quarter = minsInHour * .25;
-
-		var hour = time.getHour();
-		var timeMinute = time.getMinute();
-		var minute = Math.round((Math.round(timeMinute / quarter) * quarter));
-		if (minute > minsInHour) {
-			minute = 0;
-			if (minute > timeMinute)
-				hour++;
-		}
-
-		var newTime = new DateTime(0);
-		return newTime.add(Hour(hour)).add(Minute(minute));
+	inline function getRounded(time:DateTime) {
+		return (props.roundToQuarter) ? WorklogUtils.roundedTime(time) : time;
 	}
 }
