@@ -74,18 +74,14 @@ abstract Time(String) {
 	function splitHourMinute() {
 		if (this == null)
 			throw new haxe.Exception("Can't get hour and minutes of a null Time.");
-		return this.split(':');
+		return this.split(':').map(c -> (c == '') ? 0 : Std.parseInt(c));
 	}
 
-	public function getHour() {
-		var sp = splitHourMinute();
-		return Std.parseInt(sp[0]);
-	}
+	public function getHour()
+		return splitHourMinute()[0];
 
-	public function getMinute() {
-		var sp = splitHourMinute();
-		return Std.parseInt(sp[1]);
-	}
+	public function getMinute()
+		return splitHourMinute()[1];
 
 	public function getTotalSeconds()
 		return toDateTime().getTime();
@@ -95,9 +91,9 @@ abstract Time(String) {
 
 	@:to
 	public function toDateTime() {
-		var sp = splitHourMinute();
+		var sp = try splitHourMinute() catch (e:haxe.Exception) [0, 0];
 		var zero = new DateTime(0);
-		return zero.add(Hour(Std.parseInt(sp[0]))).add(Minute(Std.parseInt(sp[1])));
+		return zero.add(Hour(sp[0])).add(Minute(sp[1]));
 	}
 
 	@:from

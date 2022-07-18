@@ -79,7 +79,7 @@ class Worklog extends IdeckiaAction {
 					var unregisteredTaskTime = now.add(Second(-Std.int(lastTask.start.getTotalSeconds())));
 					acc = acc.add(Hour(unregisteredTaskTime.getHour())).add(Minute(unregisteredTaskTime.getMinute()));
 				}
-				server.dialog.info('Worked time: $acc').catchError(reject);
+				server.dialog.info('Worklog info', 'Worked time: $acc');
 			}
 
 			resolve(currentState);
@@ -136,14 +136,14 @@ class Worklog extends IdeckiaAction {
 				lastTask.finish = getRounded(localNow);
 				lastTask.time = lastTask.finish.add(Second(-Std.int(lastTask.start.getTotalSeconds())));
 
-				server.dialog.entry('What where you doing?').then(returnValue -> {
+				server.dialog.entry('Worklog question', 'What where you doing?').then(returnValue -> {
 					if (returnValue != '') {
 						lastTask.work = returnValue;
 						todayTasks.push(lastTask);
 						todayData.totalTime = calculateDayAccumulatedTime(todayTasks);
 						todayData.tasks = todayTasks;
 
-						server.dialog.info('Worked time: ${todayData.totalTime}').catchError(reject);
+						server.dialog.info('Worklog info', 'Worked time: ${todayData.totalTime}');
 
 						if (props.setColor)
 							currentState.bgColor = props.color.notWorking;
