@@ -7,17 +7,17 @@ using api.IdeckiaApi;
 
 typedef Props = {
 	@:editable("Do you want to change the color when you are working and when you are not?", true)
-	var setColor:Bool;
-	@:editable("Color definitions", {working: 'ff00aa00', notWorking: 'ffaa0000'})
-	var color:{working:String, notWorking:String};
+	var set_color:Bool;
+	@:editable("Color definitions", {working: 'ff00aa00', not_working: 'ffaa0000'})
+	var color:{working:String, not_working:String};
 	@:editable("Where is the log?", 'worklog.json')
-	var filePath:String;
+	var file_path:String;
 	@:editable("How many hours do you work on a day?", 8)
-	var workHours:UInt;
+	var work_hours:UInt;
 	@:editable("How many minutes do you need to have lunch?", 60)
-	var lunchMinutes:UInt;
+	var lunch_minutes:UInt;
 	@:editable("Round to the neares quarter? e.g. 15:04 will be stored as 15:00 (and 16:10 -> 16:15) ", true)
-	var roundToQuarter:Bool;
+	var round_to_quarter:Bool;
 }
 
 @:name('worklog')
@@ -25,8 +25,8 @@ typedef Props = {
 class Worklog extends IdeckiaAction {
 	function initDay():DayData {
 		var localNow = DateTime.local();
-		var minuteModulo = Std.int((props.workHours % 1) * 60);
-		var exitTime = localNow.add(Hour(Std.int(props.workHours))).add(Minute(minuteModulo + props.lunchMinutes));
+		var minuteModulo = Std.int((props.work_hours % 1) * 60);
+		var exitTime = localNow.add(Hour(Std.int(props.work_hours))).add(Minute(minuteModulo + props.lunch_minutes));
 		var startTime = getRounded(localNow);
 
 		return {
@@ -42,10 +42,10 @@ class Worklog extends IdeckiaAction {
 
 	override public function init(initialState:ItemState):js.lib.Promise<ItemState> {
 		return new js.lib.Promise((resolve, reject) -> {
-			if (props.setColor)
+			if (props.set_color)
 				initialState.bgColor = props.color.working;
 
-			var data:Array<DayData> = WorklogUtils.parse(props.filePath);
+			var data:Array<DayData> = WorklogUtils.parse(props.file_path);
 			if (data.length > 0) {
 				if (data[data.length - 1].day.equals(DateTime.local())) {
 					resolve(initialState);
@@ -55,7 +55,7 @@ class Worklog extends IdeckiaAction {
 
 			data.push(initDay());
 
-			WorklogUtils.saveToFile(props.filePath, data);
+			WorklogUtils.saveToFile(props.file_path, data);
 
 			resolve(initialState);
 		});
@@ -87,7 +87,7 @@ class Worklog extends IdeckiaAction {
 	}
 
 	function parseFile():Array<DayData> {
-		var dailyContent:Array<DayData> = WorklogUtils.parse(props.filePath);
+		var dailyContent:Array<DayData> = WorklogUtils.parse(props.file_path);
 		if (dailyContent.length == 0) {
 			dailyContent.push(initDay());
 		}
@@ -126,9 +126,9 @@ class Worklog extends IdeckiaAction {
 					start: getRounded(localNow)
 				});
 
-				WorklogUtils.saveToFile(props.filePath, data);
+				WorklogUtils.saveToFile(props.file_path, data);
 
-				if (props.setColor)
+				if (props.set_color)
 					currentState.bgColor = props.color.working;
 
 				resolve(currentState);
@@ -145,10 +145,10 @@ class Worklog extends IdeckiaAction {
 
 						server.dialog.info('Worklog info', 'Worked time: ${todayData.totalTime}');
 
-						if (props.setColor)
-							currentState.bgColor = props.color.notWorking;
+						if (props.set_color)
+							currentState.bgColor = props.color.not_working;
 
-						WorklogUtils.saveToFile(props.filePath, data);
+						WorklogUtils.saveToFile(props.file_path, data);
 
 						resolve(currentState);
 					}
@@ -158,6 +158,6 @@ class Worklog extends IdeckiaAction {
 	}
 
 	inline function getRounded(time:DateTime) {
-		return (props.roundToQuarter) ? WorklogUtils.roundedTime(time) : time;
+		return (props.round_to_quarter) ? WorklogUtils.roundedTime(time) : time;
 	}
 }
