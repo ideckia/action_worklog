@@ -10,8 +10,8 @@ typedef Props = {
 	var set_color:Bool;
 	@:editable("Color definitions", {working: 'ff00aa00', not_working: 'ffaa0000'})
 	var color:{working:String, not_working:String};
-	@:editable("Where is the log?", 'worklog.json')
-	var file_path:String;
+	@:editable("What is the directory where the log files are stored?", '.')
+	var logs_directory:String;
 	@:editable("How many hours do you work on a day?", 8)
 	var work_hours:UInt;
 	@:editable("How many minutes do you need to have lunch?", 60)
@@ -45,7 +45,7 @@ class Worklog extends IdeckiaAction {
 			if (props.set_color)
 				initialState.bgColor = props.color.working;
 
-			var data:Array<DayData> = WorklogUtils.parse(props.file_path);
+			var data:Array<DayData> = WorklogUtils.parse(WorklogUtils.getCurrentWeekFilePath(props.logs_directory));
 			if (data.length > 0) {
 				if (data[data.length - 1].day.equals(DateTime.local())) {
 					resolve(initialState);
@@ -55,7 +55,7 @@ class Worklog extends IdeckiaAction {
 
 			data.push(initDay());
 
-			WorklogUtils.saveToFile(props.file_path, data);
+			WorklogUtils.saveToFile(WorklogUtils.getCurrentWeekFilePath(props.logs_directory), data);
 
 			resolve(initialState);
 		});
@@ -87,7 +87,7 @@ class Worklog extends IdeckiaAction {
 	}
 
 	function parseFile():Array<DayData> {
-		var dailyContent:Array<DayData> = WorklogUtils.parse(props.file_path);
+		var dailyContent:Array<DayData> = WorklogUtils.parse(WorklogUtils.getCurrentWeekFilePath(props.logs_directory));
 		if (dailyContent.length == 0) {
 			dailyContent.push(initDay());
 		}
@@ -107,14 +107,13 @@ class Worklog extends IdeckiaAction {
 		return new js.lib.Promise((resolve, reject) -> {
 			final localNow = DateTime.local();
 			var todayData:DayData = data[data.length - 1];
-			if (todayData == null)
-				todayData = {
-					day: localNow,
-					totalTime: 0,
-					exitTime: localNow
-				};
+			if (!todayData.day.equals(localNow)) {
+				todayData = initDay();
+				todayData.tasks = [];
+				data.push(todayData);
+			}
 
-			final todayTasks:Array<Task> = todayData.tasks == null ? [] : todayData.tasks;
+			final todayTasks:Array<Task> = todayData.tasks;
 
 			todayTasks.sort((z1, z2) -> Std.int(z1.start.getTotalSeconds() - z2.start.getTotalSeconds()));
 			var lastTask = todayTasks.pop();
@@ -126,7 +125,7 @@ class Worklog extends IdeckiaAction {
 					start: getRounded(localNow)
 				});
 
-				WorklogUtils.saveToFile(props.file_path, data);
+				WorklogUtils.saveToFile(WorklogUtils.getCurrentWeekFilePath(props.logs_directory), data);
 
 				if (props.set_color)
 					currentState.bgColor = props.color.working;
@@ -136,21 +135,28 @@ class Worklog extends IdeckiaAction {
 				lastTask.finish = getRounded(localNow);
 				lastTask.time = lastTask.finish.add(Second(-Std.int(lastTask.start.getTotalSeconds())));
 
-				server.dialog.entry('Worklog question', 'What where you doing?').then(returnValue -> {
-					if (returnValue != '') {
-						lastTask.work = returnValue;
-						todayTasks.push(lastTask);
-						todayData.totalTime = calculateDayAccumulatedTime(todayTasks);
-						todayData.tasks = todayTasks;
+				server.dialog.custom(haxe.io.Path.join([js.Node.__dirname, 'dialog.json'])).then(response -> {
+					switch response {
+						case Some(values):
+							for (v in values) {
+								if (v.id == 'task')
+									lastTask.work = v.value;
+								if (v.id == 'description' && v.value != '')
+									lastTask.description = v.value;
+							}
+							todayTasks.push(lastTask);
+							todayData.totalTime = calculateDayAccumulatedTime(todayTasks);
+							todayData.tasks = todayTasks;
 
-						server.dialog.info('Worklog info', 'Worked time: ${todayData.totalTime}');
+							server.dialog.info('Worklog info', 'Worked time: ${todayData.totalTime}');
 
-						if (props.set_color)
-							currentState.bgColor = props.color.not_working;
+							if (props.set_color)
+								currentState.bgColor = props.color.not_working;
 
-						WorklogUtils.saveToFile(props.file_path, data);
+							WorklogUtils.saveToFile(WorklogUtils.getCurrentWeekFilePath(props.logs_directory), data);
 
-						resolve(currentState);
+							resolve(currentState);
+						case None:
 					}
 				}).catchError(reject);
 			}

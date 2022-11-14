@@ -31,6 +31,11 @@ class WorklogUtils {
 	static public function saveToFile(filePath:String, data:Array<DayData>) {
 		sys.io.File.saveContent(filePath, haxe.Json.stringify(data, JSON_SPACE));
 	}
+
+	static public function getCurrentWeekFilePath(logsDirectory:String):String {
+		var currentWeek = DateTime.local().getWeek();
+		return haxe.io.Path.join([logsDirectory, 'worklog_${currentWeek}.json']);
+	}
 }
 
 typedef DayData = {
@@ -45,6 +50,7 @@ typedef Task = {
 	var ?finish:Time;
 	var ?time:Time;
 	var ?work:String;
+	var ?description:String;
 }
 
 abstract Day(String) {
