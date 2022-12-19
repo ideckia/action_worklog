@@ -6,20 +6,23 @@
 	],
 	"body": [
 		{
-			"type": "label",
-			"text": "What where you doing?"
+			"label": {
+				"text": "What where you doing?"
+			}
 		},
 		{
-			"type": "text",
-			"id": "task",
-			"required": true,
-			"placeholder": "task-id"
+			"text": {
+				"id": "task",
+				"required": true,
+				"placeholder": "task-id"
+			}
 		},
 		{
-			"type": "text",
-			"id": "description",
-			"multiline": true,
-			"placeholder": "description"
+			"text": {
+				"id": "description",
+				"multiline": true,
+				"placeholder": "description"
+			}
 		}
 	]
 }
