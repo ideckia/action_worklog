@@ -37,6 +37,8 @@ jobs:
         mv index.js tmp/${{ env.CMD_NAME }}
         mv dialog.json tmp/${{ env.CMD_NAME }}
         mv README.md ${{ env.CMD_NAME }}
+        echo '{"repository": "http://github.com/${{ github.repository }}","filename": "${{ env.CMD_NAME }}.zip","version": "${{ github.ref_name }}"}' > ${{ env.CMD_NAME }}/.info
+        echo ${{ github.ref }} > ${{ env.CMD_NAME }}/.version
 
     - uses: papeloto/action-zip@v1
       with:
