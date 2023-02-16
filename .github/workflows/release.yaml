@@ -33,17 +33,12 @@ jobs:
 
     - name: Package to release
       run: |
-        mkdir -p tmp/${{ env.CMD_NAME }}
-        mv index.js tmp/${{ env.CMD_NAME }}
-        mv dialog.json tmp/${{ env.CMD_NAME }}
+        mkdir -p ${{ env.CMD_NAME }}
+        mv index.js ${{ env.CMD_NAME }}
+        mv dialog.json ${{ env.CMD_NAME }}
         mv README.md ${{ env.CMD_NAME }}
         echo '{"repository": "http://github.com/${{ github.repository }}","filename": "${{ env.CMD_NAME }}.zip","version": "${{ github.ref_name }}"}' > ${{ env.CMD_NAME }}/.info
-        echo ${{ github.ref }} > ${{ env.CMD_NAME }}/.version
-
-    - uses: papeloto/action-zip@v1
-      with:
-        files: tmp/
-        dest: ${{ env.CMD_NAME }}.zip
+        zip -r ${{ env.CMD_NAME }} ${{ env.CMD_NAME }}
 
     - name: Release
       uses: "marvinpinto/action-automatic-releases@latest"
