@@ -32,6 +32,7 @@ class Worklog extends IdeckiaAction {
 		return {
 			day: localNow,
 			exitTime: exitTime,
+			totalTime: 0,
 			tasks: [
 				{
 					start: startTime
@@ -61,8 +62,24 @@ class Worklog extends IdeckiaAction {
 		});
 	}
 
-	public function execute(currentState:ItemState):js.lib.Promise<ItemState> {
-		return processData(currentState, parseFile());
+	public function execute(currentState:ItemState):js.lib.Promise<ActionOutcome> {
+		return new js.lib.Promise((resolve, reject) -> {
+			processData(currentState, parseFile()).then(state -> {
+				var data = parseFile();
+				var todayData:DayData = data[data.length - 1];
+				var totalTime = null;
+				if (todayData != null && todayData.tasks != null && todayData.tasks.length > 0) {
+					totalTime = calculateDayAccumulatedTime(todayData.tasks);
+				}
+				state.extraData = {
+					data: {
+						isWorking: state.bgColor == props.color.working,
+						totalTime: totalTime
+					}
+				}
+				resolve(new ActionOutcome({state: state}));
+			}).catchError(reject);
+		});
 	}
 
 	override public function onLongPress(currentState:ItemState) {
@@ -82,7 +99,7 @@ class Worklog extends IdeckiaAction {
 				server.dialog.info('Worklog info', 'Worked time: $acc');
 			}
 
-			resolve(currentState);
+			resolve(new ActionOutcome({state: currentState}));
 		});
 	}
 
