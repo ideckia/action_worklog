@@ -6,17 +6,17 @@ Save weekly working log in a plain JSON file. The files will be named `worklog_w
 
 The path of the directory where the files will be saved can be configured with the `logs_directory` property.
 
-* When this action is loaded it will create an entry for the day.
+* When this action is loaded it will create an entry for the day (if it doesn't exist).
 * In that entry, there will be stored
   * day (ex: 2021-06-24)
-  * exit time: Based on when the entry was created and the properties `work_hours` and `lunch_minutes`, it will calculate at what time would you stop working.
+  * exit time: Based on when the entry was created and the properties `work_hours` and `lunch_minutes`, it will calculate at what time should you stop working.
   * tasks: An array which will be filled with the tasks you've done during the day. Every task seems like:
     * start: start time of the task
-    * finish: finisth time of the task
+    * finish: finish time of the task
     * time: calculated time between start and finish
-    * work: short description of the work (for example, jira identifier)
+    * work: short description of the work (for example, jira task identifier)
     * description: larger description of what where you doing
-  * totalTime: Time you've spent working (it is a sum of all the tasks times)
+  * totalTime: Time you've spent working at that day (it is a sum of all the tasks times)
 
 ## Properties
 
