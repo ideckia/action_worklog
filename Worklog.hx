@@ -1,9 +1,11 @@
 package;
 
-import datetime.DateTime;
 import WorklogUtils;
+import api.action.Data;
+import datetime.DateTime;
 
 using api.IdeckiaApi;
+using StringTools;
 
 typedef Props = {
 	@:editable("Do you want to change the color when you are working and when you are not?", true)
@@ -23,6 +25,8 @@ typedef Props = {
 @:name('worklog')
 @:description('Log you daily work in a plain json file.')
 class Worklog extends IdeckiaAction {
+	var translations:Translations;
+
 	function initDay():DayData {
 		var localNow = DateTime.local();
 		var minuteModulo = Std.int((props.work_hours % 1) * 60);
@@ -43,6 +47,7 @@ class Worklog extends IdeckiaAction {
 
 	override public function init(initialState:ItemState):js.lib.Promise<ItemState> {
 		return new js.lib.Promise((resolve, reject) -> {
+			translations = Data.getTranslations('lang');
 			if (props.set_color)
 				initialState.bgColor = props.color.working;
 
@@ -96,7 +101,8 @@ class Worklog extends IdeckiaAction {
 					var unregisteredTaskTime = now.add(Second(-Std.int(lastTask.start.getTotalSeconds())));
 					acc = acc.add(Hour(unregisteredTaskTime.getHour())).add(Minute(unregisteredTaskTime.getMinute()));
 				}
-				server.dialog.info('Worklog info', 'Worked time: $acc');
+
+				server.dialog.info('Worklog info', translations.t(server.getCurrentLang(), 'worked_time_label', [acc]));
 			}
 
 			resolve(new ActionOutcome({state: currentState}));
@@ -152,7 +158,13 @@ class Worklog extends IdeckiaAction {
 				lastTask.finish = getRounded(localNow);
 				lastTask.time = lastTask.finish.add(Second(-Std.int(lastTask.start.getTotalSeconds())));
 
-				server.dialog.custom(haxe.io.Path.join([js.Node.__dirname, 'dialog.json'])).then(response -> {
+				var lang = server.getCurrentLang();
+				var dialogPath = haxe.io.Path.join([js.Node.__dirname, 'dialog_$lang.json']);
+				if (!sys.FileSystem.exists(dialogPath)) {
+					dialogPath = haxe.io.Path.join([js.Node.__dirname, 'dialog_en.json']);
+				}
+
+				server.dialog.custom(dialogPath).then(response -> {
 					switch response {
 						case Some(values):
 							for (v in values) {
@@ -165,7 +177,7 @@ class Worklog extends IdeckiaAction {
 							todayData.totalTime = calculateDayAccumulatedTime(todayTasks);
 							todayData.tasks = todayTasks;
 
-							server.dialog.info('Worklog info', 'Worked time: ${todayData.totalTime}');
+							server.dialog.info('Worklog info', translations.t(server.getCurrentLang(), 'worked_time_label', [todayData.totalTime]));
 
 							if (props.set_color)
 								currentState.bgColor = props.color.not_working;

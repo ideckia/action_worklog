@@ -1,0 +1,28 @@
+{
+	"title": "Worklog",
+	"window_size": [
+		300,
+		175
+	],
+	"body": [
+		{
+			"label": {
+				"text": "Zertan aritu zara?"
+			}
+		},
+		{
+			"text": {
+				"id": "task",
+				"required": true,
+				"placeholder": "ataza-id"
+			}
+		},
+		{
+			"text": {
+				"id": "description",
+				"multiline": true,
+				"placeholder": "deskribapena"
+			}
+		}
+	]
+}
