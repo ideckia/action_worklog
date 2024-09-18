@@ -1,0 +1,38 @@
+[
+	{
+		"id": "action_description",
+		"text": "Log you daily work hours in a plain json file."
+	},
+	{
+		"id": "worked_time_label",
+		"text": "Worked time: {0}"
+	},
+	{
+		"id": "prop_change_color",
+		"text": "Do you want to change the color when you are working and when you are not?"
+	},
+	{
+		"id": "prop_color_def",
+		"text": "Color definitions"
+	},
+	{
+		"id": "prop_logs_directory",
+		"text": "What is the directory where the log files are stored?"
+	},
+	{
+		"id": "prop_work_hours",
+		"text": "How many hours do you work on a day?"
+	},
+	{
+		"id": "prop_lunch_minutes",
+		"text": "How many minutes do you need to have lunch?"
+	},
+	{
+		"id": "prop_round_to_quarter",
+		"text": "Round to the neares quarter? e.g. 15:04 will be stored as 15:00 (and 16:10 -> 16:15)"
+	},
+	{
+		"id": "error_no_previous_task",
+		"text": "No previous (_prev_) task found"
+	}
+]

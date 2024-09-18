@@ -40,6 +40,8 @@ The path of the directory where the files will be saved can be configured with t
   * It will create a new task with the start time.
   * If set_color is true, it will send to client the new state with the `color.working` color.
 
+pro-tip: If you want to copy the text of the previous task just type `_prev_` in the task-id field. The action will get the previous task-id and will copy for the last one.
+
 ## On long press
 
 Shows the current working time dialog

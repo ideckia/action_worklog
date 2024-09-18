@@ -1,0 +1,38 @@
+[
+	{
+		"id": "action_description",
+		"text": "Eguneko lan orduak json fitxategi soil batean gordetzen da."
+	},
+	{
+		"id": "worked_time_label",
+		"text": "Lan egindako denbora: {0}"
+	},
+	{
+		"id": "prop_change_color",
+		"text": "Lanari ari zarenean edo ez zarenean ari kolorea aldatu nahi duzu?"
+	},
+	{
+		"id": "prop_color_def",
+		"text": "Kolore definizioa"
+	},
+	{
+		"id": "prop_logs_directory",
+		"text": "Zein direktoriotan gordeko dituzu log fitxategiak?"
+	},
+	{
+		"id": "prop_work_hours",
+		"text": "Zenbat orduz egiten duzu lana egunean?"
+	},
+	{
+		"id": "prop_lunch_minutes",
+		"text": "Zenbat minutu behar dituzu egunean bazkaltzeko?"
+	},
+	{
+		"id": "prop_round_to_quarter",
+		"text": "Hurbileneko laurdenera borobildu? adibidez: 15:04-ak 15:00 bezala gordeko da (eta 16:10 -> 16:15)"
+	},
+	{
+		"id": "error_no_previous_task",
+		"text": "Ez da aurreko (_prev_) atazarik aurkitu."
+	}
+]

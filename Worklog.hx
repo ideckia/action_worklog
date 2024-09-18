@@ -1,31 +1,31 @@
 package;
 
 import WorklogUtils;
-import api.action.Data;
 import datetime.DateTime;
 
 using api.IdeckiaApi;
 using StringTools;
 
 typedef Props = {
-	@:editable("Do you want to change the color when you are working and when you are not?", true)
+	@:editable("prop_change_color", true)
 	var set_color:Bool;
-	@:editable("Color definitions", {working: 'ff00aa00', not_working: 'ffaa0000'})
+	@:editable("prop_color_def", {working: 'ff00aa00', not_working: 'ffaa0000'})
 	var color:{working:String, not_working:String};
-	@:editable("What is the directory where the log files are stored?", '.')
+	@:editable("prop_logs_directory", '.')
 	var logs_directory:String;
-	@:editable("How many hours do you work on a day?", 8)
+	@:editable("prop_work_hours", 8)
 	var work_hours:UInt;
-	@:editable("How many minutes do you need to have lunch?", 60)
+	@:editable("prop_lunch_minutes", 60)
 	var lunch_minutes:UInt;
-	@:editable("Round to the neares quarter? e.g. 15:04 will be stored as 15:00 (and 16:10 -> 16:15) ", true)
+	@:editable("prop_round_to_quarter", true)
 	var round_to_quarter:Bool;
 }
 
 @:name('worklog')
-@:description('Log you daily work in a plain json file.')
+@:description('action_description')
+@:localize
 class Worklog extends IdeckiaAction {
-	var translations:Translations;
+	static inline var PREVIOUS_WORK:String = '_prev_';
 
 	function initDay():DayData {
 		var localNow = DateTime.local();
@@ -47,7 +47,6 @@ class Worklog extends IdeckiaAction {
 
 	override public function init(initialState:ItemState):js.lib.Promise<ItemState> {
 		return new js.lib.Promise((resolve, reject) -> {
-			translations = Data.getTranslations('lang');
 			if (props.set_color)
 				initialState.bgColor = props.color.working;
 
@@ -102,7 +101,7 @@ class Worklog extends IdeckiaAction {
 					acc = acc.add(Hour(unregisteredTaskTime.getHour())).add(Minute(unregisteredTaskTime.getMinute()));
 				}
 
-				server.dialog.info('Worklog info', translations.t(server.getCurrentLang(), 'worked_time_label', [acc]));
+				core.dialog.info('Worklog info', Loc.worked_time_label.tr([acc]));
 			}
 
 			resolve(new ActionOutcome({state: currentState}));
@@ -158,18 +157,28 @@ class Worklog extends IdeckiaAction {
 				lastTask.finish = getRounded(localNow);
 				lastTask.time = lastTask.finish.add(Second(-Std.int(lastTask.start.getTotalSeconds())));
 
-				var lang = server.getCurrentLang();
-				var dialogPath = haxe.io.Path.join([js.Node.__dirname, 'dialog_$lang.json']);
+				var locale = core.data.getCurrentLocale();
+				var dialogPath = haxe.io.Path.join([js.Node.__dirname, 'dialog_$locale.json']);
 				if (!sys.FileSystem.exists(dialogPath)) {
-					dialogPath = haxe.io.Path.join([js.Node.__dirname, 'dialog_en.json']);
+					dialogPath = haxe.io.Path.join([js.Node.__dirname, 'dialog_en_uk.json']);
 				}
 
-				server.dialog.custom(dialogPath).then(response -> {
+				core.dialog.custom(dialogPath).then(response -> {
 					switch response {
 						case Some(values):
 							for (v in values) {
-								if (v.id == 'task')
-									lastTask.work = v.value;
+								if (v.id == 'task') {
+									if (v.value == PREVIOUS_WORK) {
+										if (todayTasks.length == 0) {
+											core.dialog.error('Worklog error', Loc.error_no_previous_task.tr());
+											resolve(currentState);
+											return;
+										}
+
+										lastTask.work = todayTasks[todayTasks.length - 1].work;
+									} else
+										lastTask.work = v.value;
+								}
 								if (v.id == 'description' && v.value != '')
 									lastTask.description = v.value;
 							}
@@ -177,7 +186,7 @@ class Worklog extends IdeckiaAction {
 							todayData.totalTime = calculateDayAccumulatedTime(todayTasks);
 							todayData.tasks = todayTasks;
 
-							server.dialog.info('Worklog info', translations.t(server.getCurrentLang(), 'worked_time_label', [todayData.totalTime]));
+							core.dialog.info('Worklog info', Loc.worked_time_label.tr([todayData.totalTime]));
 
 							if (props.set_color)
 								currentState.bgColor = props.color.not_working;
