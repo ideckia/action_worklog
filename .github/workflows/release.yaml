@@ -35,7 +35,7 @@ jobs:
       run: |
         mkdir -p ${{ env.CMD_NAME }}
         mv index.js ${{ env.CMD_NAME }}
-        mv dialog.json ${{ env.CMD_NAME }}
+        mv dialog*.json ${{ env.CMD_NAME }}
         mv README.md ${{ env.CMD_NAME }}
         mv loc ${{ env.CMD_NAME }}
         echo '{"repository": "http://github.com/${{ github.repository }}","filename": "${{ env.CMD_NAME }}.zip","version": "${{ github.ref_name }}"}' > ${{ env.CMD_NAME }}/.info
