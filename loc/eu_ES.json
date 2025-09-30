@@ -8,6 +8,10 @@
 		"text": "Lan egindako denbora: {0}"
 	},
 	{
+		"id": "worked_time_label_at",
+		"text": "Lan egindako denbora: {0}\nGelditutako ordua: {1}"
+	},
+	{
 		"id": "prop_change_color",
 		"text": "Lanari ari zarenean edo ez zarenean ari kolorea aldatu nahi duzu?"
 	},

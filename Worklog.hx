@@ -186,7 +186,7 @@ class Worklog extends IdeckiaAction {
 							todayData.totalTime = calculateDayAccumulatedTime(todayTasks);
 							todayData.tasks = todayTasks;
 
-							core.dialog.info('Worklog info', Loc.worked_time_label.tr([todayData.totalTime]));
+							core.dialog.info('Worklog info', Loc.worked_time_label_at.tr([todayData.totalTime, lastTask.finish]));
 
 							if (props.set_color)
 								currentState.bgColor = props.color.not_working;

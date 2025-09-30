@@ -8,6 +8,10 @@
 		"text": "Worked time: {0}"
 	},
 	{
+		"id": "worked_time_label_at",
+		"text": "Worked time: {0}\nStopped time: {1}"
+	},
+	{
 		"id": "prop_change_color",
 		"text": "Do you want to change the color when you are working and when you are not?"
 	},
