@@ -9,7 +9,7 @@
 	},
 	{
 		"id": "worked_time_label_at",
-		"text": "Lan egindako denbora: {0}\nGelditutako ordua: {1}"
+		"text": "Lan egindako denbora: {0}\nGelditutako ordua: {1}\n\nAzken lana: [{2}]"
 	},
 	{
 		"id": "prop_change_color",

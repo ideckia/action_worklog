@@ -9,7 +9,7 @@
 	},
 	{
 		"id": "worked_time_label_at",
-		"text": "Worked time: {0}\nStopped time: {1}"
+		"text": "Worked time: {0}\nStopped time: {1}\n\nLast work: [{2}]"
 	},
 	{
 		"id": "prop_change_color",
