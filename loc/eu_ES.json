@@ -38,5 +38,13 @@
 	{
 		"id": "error_no_previous_task",
 		"text": "Ez da aurreko (_prev_) atazarik aurkitu."
+	},
+	{
+		"id": "start_task",
+		"text": "Ataza berria hasten"
+	},
+	{
+		"id": "finish_task",
+		"text": "Ataza bukatzen"
 	}
 ]

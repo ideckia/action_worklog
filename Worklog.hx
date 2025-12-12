@@ -152,6 +152,7 @@ class Worklog extends IdeckiaAction {
 				if (props.set_color)
 					currentState.bgColor = props.color.working;
 
+				core.dialog.notify("Worklog", Loc.start_task.tr());
 				resolve(currentState);
 			} else {
 				lastTask.finish = getRounded(localNow);
@@ -162,6 +163,8 @@ class Worklog extends IdeckiaAction {
 				if (!sys.FileSystem.exists(dialogPath)) {
 					dialogPath = haxe.io.Path.join([js.Node.__dirname, 'dialog_en_uk.json']);
 				}
+
+				core.dialog.notify("Worklog", Loc.finish_task.tr());
 
 				core.dialog.custom(dialogPath).then(response -> {
 					switch response {

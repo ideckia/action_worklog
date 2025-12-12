@@ -38,5 +38,13 @@
 	{
 		"id": "error_no_previous_task",
 		"text": "No previous (_prev_) task found"
+	},
+	{
+		"id": "start_task",
+		"text": "New task started"
+	},
+	{
+		"id": "finish_task",
+		"text": "Finishing task"
 	}
 ]
